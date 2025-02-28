@@ -16,12 +16,17 @@ jobs:
         sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
         sudo apt-get update && sudo apt-get install vault
 
+    - name: Start Vault Server
+      run: |
+        vault server -dev -dev-root-token-id="root" &
+        sleep 5
+
     - name: Authenticate to Vault
       env:
-        VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+        VAULT_ADDR: "http://127.0.0.1:8200"
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        vault login -method=github token=${GITHUB_TOKEN}
+        vault login -method=github token=${{ secrets.GITHUB_TOKEN }}
 
     - name: Retrieve secrets
       run: |
