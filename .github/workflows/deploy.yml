@@ -19,9 +19,9 @@ jobs:
     - name: Authenticate to Vault
       env:
         VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
       run: |
-        vault login -method=github token=${GITHUB_TOKEN}
+        vault login -method=github token=${GIT_TOKEN}
 
     - name: Retrieve secrets
       run: |
