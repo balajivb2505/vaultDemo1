@@ -1,0 +1,29 @@
+name: Deploy
+
+on: [push]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install Vault
+      run: |
+        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+        sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+        sudo apt-get update && sudo apt-get install vault
+
+    - name: Authenticate to Vault
+      env:
+        VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        vault login -method=github token=${GITHUB_TOKEN}
+
+    - name: Retrieve secrets
+      run: |
+        vault kv get -format=json github-secrets/myapp/config | jq -r .data.data.username
+        vault kv get -format=json github-secrets/myapp/config | jq -r .data.data.password
