@@ -1,64 +1,82 @@
-GitHub + Vault Integration Example
+# GitHub + Vault Integration Example
+
 This repository demonstrates how to integrate HashiCorp Vault with GitHub to manage secrets and access them in a GitHub Actions workflow.
 
-Prerequisites
-HashiCorp Vault installed and running.
-GitHub account and repository.
-Administrative privileges on Vault.
-Setup Vault
-Start Vault Server
+## Prerequisites
 
-Ensure your Vault server is running and accessible. If not, start it using the appropriate command:
+- HashiCorp Vault installed and running.
+- GitHub account and repository.
+- Administrative privileges on Vault.
 
-vault server -config=config.hcl
-Authenticate to Vault
+## Setup Vault
 
-Authenticate to Vault with a token that has sufficient permissions to mount secret engines:
+1. **Start Vault Server**
 
-vault login <your-sudo-token>
-Replace <your-sudo-token> with your Vault token that has sudo capabilities.
+   Ensure your Vault server is running and accessible. If not, start it using the appropriate command:
 
-Enable the KV (Key-Value) Secrets Engine
+   ```bash
+   vault server -config=config.hcl
+   ```
 
-Mount the KV secrets engine at the desired path (e.g., github-secrets):
+2. **Authenticate to Vault**
 
-vault secrets enable -path=github-secrets kv
-Store Secrets in Vault
+   Authenticate to Vault with a token that has sufficient permissions to mount secret engines:
 
-Store a secret in Vault:
+   ```bash
+   vault login <your-sudo-token>
+   ```
 
-vault kv put github-secrets/myapp/config username='myuser' password='mypassword'
-Setup GitHub Actions
-Create GitHub Actions Workflow
+   Replace `<your-sudo-token>` with your Vault token that has `sudo` capabilities.
 
-Create a GitHub Actions workflow file in your repository. For example, .github/workflows/deploy.yml:
+3. **Enable the KV (Key-Value) Secrets Engine**
 
-name: Deploy
+   Mount the KV secrets engine at the desired path (e.g., `github-secrets`):
 
-on: [push]
+   ```bash
+   vault secrets enable -path=github-secrets kv
+   ```
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+4. **Store Secrets in Vault**
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+   Store a secret in Vault:
 
-    - name: Install Vault
-      run: |
-        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-        sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-        sudo apt-get update && sudo apt-get install vault
+   ```bash
+   vault kv put github-secrets/myapp/config username='myuser' password='mypassword'
+   ```
 
-    - name: Authenticate to Vault
-      env:
-        VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        vault login -method=github token=${GITHUB_TOKEN}
+## Setup GitHub Actions
 
-    - name: Retrieve secrets
-      run: |
-        vault kv get -format=json github-secrets/myapp/config | jq -r .data.data.username
-        vault kv get -format=json github-secrets/myapp/config | jq -r .data.data.password
+1. **Create GitHub Actions Workflow**
+
+   Create a GitHub Actions workflow file in your repository. For example, `.github/workflows/deploy.yml`:
+
+   ````yaml name=.github/workflows/deploy.yml
+   name: Deploy
+
+   on: [push]
+
+   jobs:
+     deploy:
+       runs-on: ubuntu-latest
+
+       steps:
+       - name: Checkout code
+         uses: actions/checkout@v2
+
+       - name: Install Vault
+         run: |
+           curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+           sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+           sudo apt-get update && sudo apt-get install vault
+
+       - name: Authenticate to Vault
+         env:
+           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+         run: |
+           vault login -method=github token=${GITHUB_TOKEN}
+
+       - name: Retrieve secrets
+         run: |
+           vault kv get -format=json github-secrets/myapp/config | jq -r .data.data.username
+           vault kv get -format=json github-secrets/myapp/config | jq -r .data.data.password
